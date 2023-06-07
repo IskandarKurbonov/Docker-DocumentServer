@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+    stages {
+        stage('Start Certificates') {
+            steps {
+                sh '''
+                    cd tests
+                    export config=certs-customized.yml
+                    variables="ssl=true private_key=mycert.key certificate_request=mycert.csr certificate=mycert.crt SSL_CERTIFICATE_PATH=/var/www/onlyoffice/Data/certs/mycert.crt SSL_KEY_PATH=/var/www/onlyoffice/Data/certs/mycert.key"
+                    for v in $variables; do
+                        export $v
+                    done
+                    ./test.sh
+                    sleep 60
+                    '''
+            }
+        }
+    }
+}
