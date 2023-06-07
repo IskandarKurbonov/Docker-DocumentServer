@@ -22,6 +22,7 @@ if [[ $ssl == "true" ]]; then
     -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" \
     -key ${private_key} \
     -out ${certificate_request}
+  sleep 90
   openssl x509 -req -days 365 -in ${certificate_request} -signkey ${private_key} -out ${certificate}
   openssl dhparam -out dhparam.pem 2048
   chmod 400 ${private_key}
