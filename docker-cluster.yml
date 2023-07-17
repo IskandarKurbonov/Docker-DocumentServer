@@ -1,4 +1,4 @@
-version: 3.8
+version: '2.1'
 
 x-ds-image:
   &ds-image
@@ -25,12 +25,12 @@ services:
     stdin_open: true
     restart: always
     volumes:
-          - etc:/etc/onlyoffice
-          - var:/var/www/onlyoffice/Data
-          - var:/var/log/onlyoffice
-          - var:/var/lib/onlyoffice/documentserver/App_Data/cache/files
-          - var:/var/www/onlyoffice/documentserver-example/public/files
-          - usr:/usr/share/fonts
+       - /etc/onlyoffice
+       - /var/www/onlyoffice/Data
+       - /var/log/onlyoffice
+       - /var/lib/onlyoffice/documentserver/App_Data/cache/files
+       - /var/www/onlyoffice/documentserver-example/public/files
+       - /usr/share/fonts
        
   onlyoffice-documentserver:
     image: *ds-image
@@ -39,11 +39,10 @@ services:
       - onlyoffice-postgresql
       - onlyoffice-redis
       - onlyoffice-rabbitmq
-    deploy:
-      replicas: 2
     environment:
       - ONLYOFFICE_DATA_CONTAINER_HOST=onlyoffice-documentserver-data
       - BALANCE=uri depth 3
+      - EXCLUDE_PORTS=443
       - HTTP_CHECK=GET /healthcheck
       - EXTRA_SETTINGS=http-check expect string true
       # Uncomment the string below to redirect HTTP request to HTTPS request.
@@ -52,17 +51,32 @@ services:
     restart: always
     expose:
       - '80'
-    volumes:
-          - etc:/etc/onlyoffice
-          - var:/var/www/onlyoffice/Data
-          - var:/var/log/onlyoffice
-          - var:/var/lib/onlyoffice/documentserver/App_Data/cache/files
-          - var:/var/www/onlyoffice/documentserver-example/public/files
-          - usr:/usr/share/fonts
+    volumes_from:
+     - onlyoffice-documentserver-data
 
-  onlyoffice-nginx:
-    container_name: onlyoffice-nginx
-    image: nginx:latest
+
+  # onlyoffice-nginx:
+  #   container_name: onlyoffice-nginx
+  #   image: nginx:latest
+  #   depends_on:
+  #     - onlyoffice-documentserver
+  #   environment:
+  #     - MODE=http
+  #   stdin_open: true
+  #   links:
+  #     - onlyoffice-documentserver
+  #   volumes:
+  #     - ./default.conf:/etc/nginx/conf.d/default.conf
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   restart: always
+  #   ports:
+  #     - '80:80'
+  #     - '443:443'
+
+      
+  onlyoffice-haproxy:
+    container_name: onlyoffice-haproxy
+    image: dockercloud/haproxy:1.5.1
     depends_on:
       - onlyoffice-documentserver
     environment:
@@ -73,7 +87,7 @@ services:
     links:
      - onlyoffice-documentserver
     volumes:
-      - ./default.conf:/etc/nginx/conf.d/default.conf
+      # - ./haproxy.cfg:/etc/haproxy/haproxy.cfg7
       - /var/run/docker.sock:/var/run/docker.sock
       # Uncomment the string below to map a ssl certificate from host
       # to the proxy container
@@ -82,6 +96,7 @@ services:
     ports:
       - '80:80'
       - '443:443'
+      - '1936:1936'
        
   onlyoffice-redis:
     container_name: onlyoffice-redis
@@ -112,7 +127,3 @@ services:
 
 volumes:
   postgresql_data:
-  onlyoffice-documentserver-data:
-  etc:
-  var:
-  usr:
