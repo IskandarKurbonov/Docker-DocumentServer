@@ -1,4 +1,4 @@
-version: 3.8
+version: '3.8'
 
 x-ds-image:
   &ds-image
@@ -40,7 +40,7 @@ services:
       - onlyoffice-redis
       - onlyoffice-rabbitmq
     deploy:
-      replicas: 2
+      replicas: 3
     environment:
       - ONLYOFFICE_DATA_CONTAINER_HOST=onlyoffice-documentserver-data
       - BALANCE=uri depth 3
